@@ -1,0 +1,46 @@
+{
+  "name": "@gocodingnow/rn-better-boilerplate",
+  "version": "0.0.12",
+  "description": "React Native Better Boilerplate",
+  "author": "I Le - Kevin <ild.freelancer@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ildfreelancer/react-native-better-boilerplate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ildfreelancer/react-native-better-boilerplate/issues"
+  },
+  "main": "post-init-script.js",
+  "license": "MIT",
+  "files": [
+    "template",
+    "template.config.js"
+  ],
+  "keywords": [
+    "starter-kit",
+    "gocodingnow",
+    "react-native",
+    "typescript",
+    "jest",
+    "template",
+    "boilerplate"
+  ],
+  "homepage": "https://github.com/ildfreelancer/react-native-better-boilerplate#readme",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^16.0.2",
+    "@commitlint/config-conventional": "^16.0.0",
+    "@commitlint/cz-commitlint": "^16.0.0",
+    "@commitlint/prompt-cli": "^16.0.0",
+    "commitizen": "^4.2.4",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^7.0.4"
+  },
+  "config": {
+    "commitizen": {
+      "path": "@commitlint/cz-commitlint"
+    }
+  }
+}

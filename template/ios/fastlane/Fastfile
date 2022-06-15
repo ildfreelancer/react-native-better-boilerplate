@@ -1,0 +1,103 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+fastlane_require 'dotenv'
+
+default_platform(:ios)
+
+#----------------- START - FUNCTION HELPER -----------------#
+# Get app version
+# def get_app_version
+#   version = sh("node -p \"require(\'..\/..\/package.json\').version\"")
+#   version.delete!("\n")
+#   ENV['APP_VERSION'] = version
+# end
+
+# Increment build number
+def set_build_numbers_to_current_timestamp
+  incremented_build_number = Time.now.to_i.to_s
+  ENV['VERSION_BUILD_NUMBER'] = incremented_build_number
+end
+#----------------- END - FUNCTION HELPER -----------------#
+
+platform :ios do
+  desc '[CodeSigning] Fetch certificates and provisioning profiles'
+  private_lane :codesigning do |options|
+    match(
+      app_identifier: [ENV['IOS_APP_IDENTIFIER']],
+      type: options[:type],
+    )
+  end
+
+  desc '[Build] Build application'
+  private_lane :build do |options|
+    # get_app_version
+
+    set_build_numbers_to_current_timestamp
+
+    update_info_plist(
+      xcodeproj: "#{ENV['IOS_PROJECT_NAME']}.xcodeproj",
+      plist_path: "#{ENV['IOS_PROJECT_NAME']}/Info.plist",
+      block: lambda { |plist|
+        plist['CFBundleVersion'] = ENV['VERSION_BUILD_NUMBER']
+        # plist['CFBundleShortVersionString'] = ENV['APP_VERSION']
+      }
+    )
+
+    codesigning(type: options[:code_signing_match_type])
+
+    build_app(
+      scheme: ENV['IOS_SCHEMA'],
+      workspace: "#{ENV['IOS_PROJECT_NAME']}.xcworkspace",
+      silent: true,
+      clean: true,
+      export_method: options[:export_method]
+    )
+  end
+
+  # puts '[Integration][Sentry] Upload DSYM'
+  # private_lane :upload_sentry do |options|
+  #   sh("which sentry-cli")
+  #   sh("sentry-cli --version")
+  #   sentry_upload_dsym(
+  #     auth_token: ENV['SENTRY_AUTH_TOKEN'],
+  #     org_slug: ENV['SENTRY_ORG'],
+  #     project_slug: ENV['SENTRY_PROJECT']
+  #   )
+  # end
+
+  desc '[Distribution] Submit a new Beta Build to Testflight'
+  lane :distribute_to_testflight do |options|
+    build(code_signing_match_type: "appstore", export_method: "app-store")
+
+    # upload_sentry()
+
+    upload_to_testflight(
+      username: ENV['FASTLANE_USER'],
+      app_identifier: ENV['IOS_APP_IDENTIFIER'],
+      team_id: ENV['IOS_TEAM_ID'],
+      skip_waiting_for_build_processing: true,
+      skip_submission: true
+    )
+
+    slack(message: "[IOS] Application was built and successfully uploaded to Testflight :rocket:")
+  end
+end
+
+error do |lane, exception, options|
+  slack(
+    message: exception.to_s,
+    success: false,
+    payload: { "Output" => exception.error_info.to_s }
+  )
+ end
+ 

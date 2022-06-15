@@ -1,0 +1,9 @@
+git_url(ENV["GIT_URL"])
+
+storage_mode("git")
+
+type("development") # The default type, can be: appstore, adhoc, enterprise or development
+
+app_identifier(ENV["IOS_APP_IDENTIFIER"])
+team_id(ENV["FASTLANE_ITC_TEAM_ID"])
+username(ENV["FASTLANE_USERNAME"])

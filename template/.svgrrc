@@ -1,0 +1,7 @@
+{
+  "replaceAttrValues": {
+    "$fill": "{props.fill}",
+    "$stroke": "{props.stroke}",
+    "$opacity": "{props.opacity}"
+  }
+}

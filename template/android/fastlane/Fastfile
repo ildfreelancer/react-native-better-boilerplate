@@ -1,0 +1,65 @@
+fastlane_require 'dotenv'
+
+default_platform(:android)
+
+# Get app version
+def get_app_version
+  version = sh("node -p \"require(\'..\/package.json\').version\"")
+  version.delete!("\n")
+  ENV['APP_VERSION'] = version
+end
+
+platform :android do
+  # Increment version code
+  def set_version_code_to_current_timestamp
+    incremented_version_code = Time.now.to_i.to_s
+    ENV['ANDROID_VERSION_CODE'] = incremented_version_code
+  end
+
+  desc "Deploy a new version to the Google Play"
+  lane :deploy do
+    gradle(task: "clean assembleRelease")
+    upload_to_play_store
+  end
+
+  desc "Build app"
+  private_lane :build do |options|
+    set_version_code_to_current_timestamp()
+
+    # get_app_version()
+
+    # android_set_version_name(
+    #   version_name: ENV['APP_VERSION'],
+    # )
+
+    android_set_version_code(
+      version_code: ENV['ANDROID_VERSION_CODE'].to_i,
+    )
+
+    gradle(
+      task: "clean bundle",
+      build_type: 'Release',
+      properties: {
+        "android.injected.signing.store.file" => ENV['MYAPP_UPLOAD_STORE_FILE'],
+        "android.injected.signing.store.password" => ENV['MYAPP_UPLOAD_STORE_PASSWORD'],
+        "android.injected.signing.key.alias" => ENV['MYAPP_UPLOAD_KEY_ALIAS'],
+        "android.injected.signing.key.password" => ENV['MYAPP_UPLOAD_KEY_PASSWORD'],
+      }
+    )
+  end
+
+  desc "Deploy a new version to the Google Play"
+  lane :distribute_to_playstore do |options|
+    build
+    upload_to_play_store(track: 'internal')
+    slack(message: "[Android] Application was built and successfully uploaded to Play store :rocket:")
+  end
+end
+
+error do |lane, exception, options|
+ slack(
+   message: exception.to_s,
+   success: false,
+   payload: { "Output" => exception.error_info.to_s }
+ )
+end
